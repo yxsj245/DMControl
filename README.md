@@ -3,6 +3,7 @@
 ![image](https://github.com/user-attachments/assets/d0841540-7127-4cc7-9458-9c529522b6f9)
 
 # 如何使用
+从右侧[Releases](https://github.com/yxsj245/DMControl/releases)中下载最新发行二进制可执行程序
 程序运行后会在运行目录下创建一个config.json 配置文件
 ```json
 {
