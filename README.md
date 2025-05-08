@@ -1,0 +1,2 @@
+# DMControl
+用于Windows设备管理器中指定硬件的快速禁用和启用
