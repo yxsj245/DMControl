@@ -9,6 +9,15 @@ import tkinter as tk
 from tkinter import ttk, messagebox, scrolledtext
 import threading
 
+# 重定向标准输出和错误输出，避免在没有控制台的情况下引发错误
+if hasattr(sys, 'frozen'):
+    # 如果是打包后的可执行文件
+    # 使用程序运行的当前路径保存日志文件
+    current_dir = os.path.dirname(os.path.abspath(sys.executable))
+    
+    sys.stdout = open(os.path.join(current_dir, 'output.log'), 'w', encoding='utf-8')
+    sys.stderr = open(os.path.join(current_dir, 'error.log'), 'w', encoding='utf-8')
+
 # 设置Windows任务栏图标
 try:
     from ctypes import windll
@@ -43,7 +52,15 @@ def get_all_devices():
 
 def load_config():
     """从config.json加载配置"""
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    # 使用程序运行的当前路径保存配置文件
+    if hasattr(sys, 'frozen'):
+        # 如果是打包后的可执行文件，使用可执行文件所在目录
+        current_dir = os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        # 如果是脚本模式运行，使用脚本所在目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    config_path = os.path.join(current_dir, "config.json")
     
     # 默认配置
     default_config = {
@@ -70,7 +87,16 @@ def load_config():
 
 def save_config(config):
     """保存配置到config.json"""
-    config_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "config.json")
+    # 使用程序运行的当前路径保存配置文件
+    if hasattr(sys, 'frozen'):
+        # 如果是打包后的可执行文件，使用可执行文件所在目录
+        current_dir = os.path.dirname(os.path.abspath(sys.executable))
+    else:
+        # 如果是脚本模式运行，使用脚本所在目录
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    config_path = os.path.join(current_dir, "config.json")
+    
     try:
         with open(config_path, "w", encoding="utf-8") as f:
             json.dump(config, f, indent=4, ensure_ascii=False)
@@ -615,22 +641,52 @@ class DeviceControllerGUI:
         self.root.destroy()
 
 def main():
-    # 检查管理员权限，如果不是管理员，则自动提权
-    if not is_admin():
-        print("正在请求管理员权限...")
-        elevate_privileges()
-        # 退出当前非管理员进程
-        sys.exit(0)
-    
-    # 创建GUI
-    root = tk.Tk()
-    app = DeviceControllerGUI(root)
-    
-    # 设置窗口关闭处理
-    root.protocol("WM_DELETE_WINDOW", app.on_closing)
-    
-    # 运行主循环
-    root.mainloop()
+    try:
+        # 检查管理员权限，如果不是管理员，则自动提权
+        if not is_admin():
+            print("正在请求管理员权限...")
+            elevate_privileges()
+            # 退出当前非管理员进程
+            sys.exit(0)
+        
+        # 创建GUI
+        root = tk.Tk()
+        root.title("USB设备控制器")  # 设置默认标题
+        
+        # 在Windows上设置应用程序图标
+        try:
+            root.iconbitmap(default="NONE")
+        except:
+            pass
+            
+        app = DeviceControllerGUI(root)
+        
+        # 设置窗口关闭处理
+        root.protocol("WM_DELETE_WINDOW", app.on_closing)
+        
+        # 运行主循环
+        root.mainloop()
+    except Exception as e:
+        # 捕获所有异常，避免在无控制台情况下崩溃
+        error_msg = f"程序启动时发生错误:\n{str(e)}"
+        print(error_msg)
+        
+        # 尝试显示错误对话框
+        try:
+            tk.Tk().withdraw()
+            messagebox.showerror("错误", error_msg)
+        except:
+            # 如果连错误对话框都无法显示，至少写入日志
+            if hasattr(sys, 'frozen'):
+                # 如果是打包后的可执行文件，使用可执行文件所在目录
+                current_dir = os.path.dirname(os.path.abspath(sys.executable))
+            else:
+                # 如果是脚本模式运行，使用脚本所在目录
+                current_dir = os.path.dirname(os.path.abspath(__file__))
+                
+            log_path = os.path.join(current_dir, "crash.log")
+            with open(log_path, "a", encoding="utf-8") as f:
+                f.write(f"{time.strftime('%Y-%m-%d %H:%M:%S')} - {error_msg}\n")
 
 if __name__ == "__main__":
     main() 
