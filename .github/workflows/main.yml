@@ -7,7 +7,7 @@ jobs:
   build:
     runs-on: windows-latest
     env:
-      CODE_NAME: USB-Device-Controller # 定义文件名 
+      CODE_NAME: DMControl # 定义文件名 
     strategy:
       fail-fast: false
       matrix:
@@ -44,7 +44,7 @@ jobs:
         # 打包主程序并包含所有需要的文件
         # 使用 -w 参数隐藏控制台窗口
         pyinstaller -F -w disable_enable_usb_gui.py `
-          --name "USB设备控制器" `
+          --name "DMControl" `
           --clean
 
     - name: 检查打包输出
@@ -58,4 +58,4 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ env.CODE_NAME }}
-        path: dist/USB设备控制器.exe
+        path: dist/DMControl.exe
